@@ -1,0 +1,6 @@
+@Champs.Server_HostAddress = http://localhost:5240
+
+GET {{Champs.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

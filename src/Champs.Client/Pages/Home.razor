@@ -1,0 +1,47 @@
+﻿@page "/"
+
+<PageTitle>Champs Game</PageTitle>
+<div id="canvasHolder" style="border: 10px solid #ccc;width: 400px; height: 400px">
+    <BECanvas Width="400" Height="400" @ref="_canvasReference"></BECanvas>
+</div>
+
+@code {
+    private Canvas2DContext _context = null!;
+
+    protected BECanvasComponent _canvasReference = null!;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        _context = await _canvasReference.CreateCanvas2DAsync();
+        await Draw();
+    }
+
+    const double multiplier = 40;
+    private (double, double, double, double) Scale(double x, double y, double width, double height) =>
+    (x * multiplier, y * multiplier, width * multiplier, height * multiplier);
+
+    private async Task FillRectAsync(double x, double y, double width, double height)
+    {
+        var (scaledX, scaledY, scaledWidth, scaledHeight) = Scale(x, y, width, height);
+        await _context.FillRectAsync(scaledX, scaledY, scaledWidth, scaledHeight);
+    }
+
+    private async Task FillRectAsync(double x, double y)
+    {
+        await FillRectAsync(x, y, 1, 1);
+    }
+
+    private async Task Draw()
+    {
+        Console.WriteLine("Drawing");
+        await _context.SetFillStyleAsync("white");
+        await FillRectAsync(0, 0, 10, 10);
+
+        await _context.SetFillStyleAsync("blue");
+        await FillRectAsync(1, 1);
+
+        await _context.SetFillStyleAsync("green");
+        await FillRectAsync(2, 2);
+    }
+
+}
