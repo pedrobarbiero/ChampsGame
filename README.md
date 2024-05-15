@@ -1,4 +1,4 @@
-### BetTracker 
-Welcome to BetTracker, your comprehensive tool for managing, tracking, and analyzing your bets. 
+### Champs Game 
+Welcome to Champs Game, the most fun game in development.
 
 Work in Progress...
