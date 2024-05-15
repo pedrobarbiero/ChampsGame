@@ -30,4 +30,13 @@
     <script src="_content/Blazor.Extensions.Canvas/blazor.extensions.canvas.js"></script>
 </body>
 
+<script>
+    window.addKeyDownEventListener = () => {
+        document.addEventListener('keydown', (event) => {
+            DotNet.invokeMethodAsync('Champs.Client', 'OnKeyDown', event.key);
+        });
+    };
+
+</script>
+
 </html>
