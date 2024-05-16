@@ -1,4 +1,7 @@
-﻿@inject IJSRuntime JSRuntime
+﻿@using Champs.Shared
+@using Microsoft.AspNetCore.SignalR.Client
+
+@inject IJSRuntime JSRuntime
 
 @page "/"
 <PageTitle>Champs Game</PageTitle>
@@ -7,36 +10,74 @@
 </div>
 
 @code {
+    private string _hubUrl = "http://localhost:5185/game";
+    private HubConnection _hubConnection = null!;
+
+    public async Task ConnectToHub()
+    {
+        _hubConnection = new HubConnectionBuilder()
+            .WithUrl(_hubUrl)
+            .Build();
+
+        _hubConnection.On<GameState>("Broadcast", async (state) =>
+        {
+            Console.WriteLine("Received game state");
+            Console.WriteLine($"state: {state}");
+            await Draw(state);
+        });
+
+        await _hubConnection.StartAsync();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await ConnectToHub();
+    }
+
+    private async Task MovePlayer(Direction direction)
+    {
+        await _hubConnection.SendAsync("MovePlayer", _currentPlayerId, direction);
+    }
+
+    private async Task ConnectPlayer()
+    {
+        await _hubConnection.SendAsync("ConnectPlayer", _currentPlayerId);
+    }
+
+    private async Task DisconnectFromHub()
+    {
+        await _hubConnection.StopAsync();
+        await _hubConnection.DisposeAsync();
+    }
+
+
     private Canvas2DContext _context = null!;
     protected BECanvasComponent _canvasReference = null!;
-    private GameState _gameState = null!;
-    private string _currentPlayerId = "1";
+    private string _currentPlayerId = null!;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        Console.WriteLine("OnAfterRenderAsync");
-        var game = new Game();
-        _gameState = game.State;
         _context = await _canvasReference.CreateCanvas2DAsync();
 
         if (firstRender)
         {
+            _currentPlayerId = Guid.NewGuid().ToString();
+            await ConnectPlayer();
             await JSRuntime.InvokeVoidAsync("addKeyDownEventListener");
             GlobalKeyListener.KeyDownObservers.Add(async (key) =>
             {
-                var direction = key switch
+                Direction? direction = key switch
                 {
                     "ArrowUp" => Direction.Up,
                     "ArrowDown" => Direction.Down,
                     "ArrowLeft" => Direction.Left,
                     "ArrowRight" => Direction.Right,
-                    _ => throw new NotImplementedException()
+                    _ => null
                 };
-                game.MovePlayer(_currentPlayerId, direction);
-                await Draw(); // Todo: notify
+                if (direction is not null)
+                    await MovePlayer(direction.Value);
             });
         }
-        await Draw();
     }
 
     const double multiplier = 40;
@@ -54,104 +95,42 @@
         await FillRectAsync(x, y, 1, 1);
     }
 
-    private async Task Draw()
+    private async Task Draw(GameState _gameState)
     {
+        Console.WriteLine("Drawing game state");
         await _context.ClearRectAsync(0, 0, 10, 10);
         await _context.SetFillStyleAsync("white");
         await FillRectAsync(0, 0, 10, 10);
 
-        await DrawPlayers();
-        await DrawFruits();
+        await Draw(_gameState.Players);
+        await Draw(_gameState.Fruits);
     }
 
-    private async Task DrawPlayers()
+    private async Task Draw(IReadOnlyDictionary<string, Player> players)
     {
+        Console.WriteLine("Drawing players");
         await _context.SetFillStyleAsync("#888888");
-        foreach (KeyValuePair<string, Player> entry in _gameState.Players)
+        foreach (KeyValuePair<string, Player> entry in players)
         {
+            Console.WriteLine(entry.Key);
             if (entry.Key != _currentPlayerId)
                 await FillRectAsync(entry.Value.X, entry.Value.Y);
         }
         await _context.SetFillStyleAsync("blue");
-        var currentPlayer = _gameState.Players[_currentPlayerId];
+        var currentPlayer = players[_currentPlayerId];
         await FillRectAsync(currentPlayer.X, currentPlayer.Y);
     }
 
-    private async Task DrawFruits()
+    private async Task Draw(IReadOnlyDictionary<string, Fruit> fruits)
     {
+        Console.WriteLine("Drawing fruits");
         await _context.SetFillStyleAsync("green");
-        foreach (KeyValuePair<string, Fruit> entry in _gameState.Fruits)
+        foreach (KeyValuePair<string, Fruit> entry in fruits)
         {
+            Console.WriteLine(entry.Key);
             await FillRectAsync(entry.Value.X, entry.Value.Y);
         }
     }
 
-    public class Game
-    {
-        public Game()
-        {
-            State = new GameState(
-                new Dictionary<string, Player>() {
-                    { "1", new() { Name = "1", X = 1, Y = 1 } },
-                    { "2", new() { Name = "2", X = 2, Y = 2 } },
-                    { "3", new() { Name = "3", X = 3, Y = 3 } }
-                    },
-                new Dictionary<string, Fruit>() {
-                    { "1", new() { X = 5, Y = 5 } },
-                    { "2", new() { X = 6, Y = 6 } },
-                    { "3", new() { X = 7, Y = 5 } }
-                },
-                new() { Width = 10, Height = 10 }
 
-            );
-        }
-        public GameState State { get; private set; }
-        public void MovePlayer(string playerId, Direction direction)
-        {
-            var player = State.Players[playerId];
-            Console.WriteLine($"MovePlayer {playerId} {direction}");
-            if (direction == Direction.Up && player.Y > 0)
-            {
-                player.Y--;
-            }
-            else if (direction == Direction.Down && player.Y < State.Board.Height - 1)
-            {
-                player.Y++;
-            }
-            else if (direction == Direction.Left && player.X > 0)
-            {
-                player.X--;
-            }
-            else if (direction == Direction.Right && player.X < State.Board.Width - 1)
-            {
-                player.X++;
-            }
-            PickFruitIfCollide(playerId);
-        }
-
-        private void PickFruitIfCollide(string playerId)
-        {
-            var player = State.Players[playerId];
-            foreach (KeyValuePair<string, Fruit> entry in State.Fruits)
-            {
-                if (PlayerAndFruitCollided(player, entry.Value))
-                {
-                    State.RemoveFruit(entry.Key);
-                    break;
-                }
-            }
-        }
-
-        private bool PlayerAndFruitCollided(Player player, Fruit fruit) =>
-            player.X == fruit.X && player.Y == fruit.Y;
-        
-    }
-
-    public enum Direction
-    {
-        Up,
-        Down,
-        Left,
-        Right
-    }
 }

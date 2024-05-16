@@ -1,4 +1,4 @@
-@Champs.Server_HostAddress = http://localhost:5240
+@Champs.Server_HostAddress = http://localhost:5185
 
 GET {{Champs.Server_HostAddress}}/weatherforecast/
 Accept: application/json

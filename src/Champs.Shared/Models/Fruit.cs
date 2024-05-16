@@ -1,4 +1,4 @@
-﻿namespace Champs.Client;
+﻿namespace Champs.Shared;
 
 public class Fruit
 {
