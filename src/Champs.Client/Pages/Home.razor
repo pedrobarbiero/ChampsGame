@@ -12,21 +12,22 @@
 @code {
     private string _hubUrl = "http://localhost:5185/game";
     private HubConnection _hubConnection = null!;
-
+    private Canvas2DContext _context = null!;
+    protected BECanvasComponent _canvasReference = null!;
+    private string _currentPlayerId = null!;
     public async Task ConnectToHub()
     {
         _hubConnection = new HubConnectionBuilder()
             .WithUrl(_hubUrl)
             .Build();
 
-        _hubConnection.On<GameState>("Broadcast", async (state) =>
+        _hubConnection.On<StateDto>("Broadcast", async (state) =>
         {
-            Console.WriteLine("Received game state");
-            Console.WriteLine($"state: {state}");
             await Draw(state);
         });
 
         await _hubConnection.StartAsync();
+        _currentPlayerId = _hubConnection.ConnectionId ?? throw new InvalidOperationException("ConnectionId is null");
     }
 
     protected override async Task OnInitializedAsync()
@@ -34,26 +35,11 @@
         await ConnectToHub();
     }
 
+
     private async Task MovePlayer(Direction direction)
     {
         await _hubConnection.SendAsync("MovePlayer", _currentPlayerId, direction);
     }
-
-    private async Task ConnectPlayer()
-    {
-        await _hubConnection.SendAsync("ConnectPlayer", _currentPlayerId);
-    }
-
-    private async Task DisconnectFromHub()
-    {
-        await _hubConnection.StopAsync();
-        await _hubConnection.DisposeAsync();
-    }
-
-
-    private Canvas2DContext _context = null!;
-    protected BECanvasComponent _canvasReference = null!;
-    private string _currentPlayerId = null!;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -61,8 +47,6 @@
 
         if (firstRender)
         {
-            _currentPlayerId = Guid.NewGuid().ToString();
-            await ConnectPlayer();
             await JSRuntime.InvokeVoidAsync("addKeyDownEventListener");
             GlobalKeyListener.KeyDownObservers.Add(async (key) =>
             {
@@ -95,24 +79,21 @@
         await FillRectAsync(x, y, 1, 1);
     }
 
-    private async Task Draw(GameState _gameState)
+    private async Task Draw(StateDto state)
     {
-        Console.WriteLine("Drawing game state");
         await _context.ClearRectAsync(0, 0, 10, 10);
         await _context.SetFillStyleAsync("white");
         await FillRectAsync(0, 0, 10, 10);
 
-        await Draw(_gameState.Players);
-        await Draw(_gameState.Fruits);
+        await Draw(state.Players);
+        await Draw(state.Fruits);
     }
 
     private async Task Draw(IReadOnlyDictionary<string, Player> players)
     {
-        Console.WriteLine("Drawing players");
         await _context.SetFillStyleAsync("#888888");
         foreach (KeyValuePair<string, Player> entry in players)
         {
-            Console.WriteLine(entry.Key);
             if (entry.Key != _currentPlayerId)
                 await FillRectAsync(entry.Value.X, entry.Value.Y);
         }
@@ -123,11 +104,9 @@
 
     private async Task Draw(IReadOnlyDictionary<string, Fruit> fruits)
     {
-        Console.WriteLine("Drawing fruits");
         await _context.SetFillStyleAsync("green");
         foreach (KeyValuePair<string, Fruit> entry in fruits)
         {
-            Console.WriteLine(entry.Key);
             await FillRectAsync(entry.Value.X, entry.Value.Y);
         }
     }

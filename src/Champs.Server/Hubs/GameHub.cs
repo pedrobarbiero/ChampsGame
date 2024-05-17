@@ -5,24 +5,38 @@ namespace Champs.Server;
 
 public class GameHub : Hub
 {
-    private static readonly Game game = new();
-    public async Task ConnectPlayer(string playerId)
+    public GameHub()
     {
-        Console.WriteLine($"ConnectPlayer {playerId}");
-        game.AddPlayer(playerId, new Player { Name = playerId, X = 1, Y = 1 }); //Todo: add random x and y
-        await Broadcast(game.State);
+        game.OnFruitAdded += async (fruitId) =>
+        {
+            Console.WriteLine($"Fruit added: {fruitId}");
+            // await Broadcast(game);
+        };
+    }
+    private static readonly Game game = new();
+
+    public override async Task OnConnectedAsync()
+    {
+        await base.OnConnectedAsync();
+        game.AddNewPlayer(Context.ConnectionId);
+        await Broadcast(game);
+    }
+
+    public override async Task OnDisconnectedAsync(Exception? exception)
+    {
+        await base.OnDisconnectedAsync(exception);
+        game.RemovePlayer(Context.ConnectionId);
+        await Broadcast(game);
     }
 
     public async Task MovePlayer(string playerId, Direction direction)
     {
-        Console.WriteLine($"MovePlayer {playerId} {direction}");
         game.MovePlayer(playerId, direction);
-        await Broadcast(game.State);
+        await Broadcast(game);
     }
 
-    public async Task Broadcast(GameState gameState)
+    public async Task Broadcast(StateDto state)
     {
-        await Clients.All.SendAsync("Broadcast", gameState);
-        Console.WriteLine($"Broadcasted state: {gameState}");
+        await Clients.All.SendAsync("Broadcast", state);
     }
 }
