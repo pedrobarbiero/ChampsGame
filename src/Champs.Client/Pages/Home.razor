@@ -8,6 +8,25 @@
 <div id="canvasHolder" style="border: 10px solid #ccc;width: 400px; height: 400px">
     <BECanvas Width="400" Height="400" @ref="_canvasReference"></BECanvas>
 </div>
+<div>
+    <table>
+        <tr>
+            <th>Player</th>
+            <th>Score</th>
+        </tr>
+        @if (_state is not null)
+        {
+            foreach (var player in _state.Players.Values.OrderByDescending(p => p.Score))
+            {
+                var rowStyle = player.Id == _currentPlayerId ? "background-color:blue; color:white" : "";
+                <tr style="@rowStyle">
+                    <td>@player.Id</td>
+                    <td>@player.Score</td>
+                </tr>
+            }
+        }
+    </table>
+</div>
 
 @code {
     private string _hubUrl = "http://localhost:5185/game";
@@ -15,6 +34,7 @@
     private Canvas2DContext _context = null!;
     protected BECanvasComponent _canvasReference = null!;
     private string _currentPlayerId = null!;
+    private StateDto? _state;
     public async Task ConnectToHub()
     {
         _hubConnection = new HubConnectionBuilder()
@@ -23,7 +43,9 @@
 
         _hubConnection.On<StateDto>("Broadcast", async (state) =>
         {
+            _state = state;
             await Draw(state);
+            StateHasChanged();
         });
 
         await _hubConnection.StartAsync();
@@ -85,8 +107,8 @@
         await _context.SetFillStyleAsync("white");
         await FillRectAsync(0, 0, 10, 10);
 
-        await Draw(state.Players);
         await Draw(state.Fruits);
+        await Draw(state.Players);
     }
 
     private async Task Draw(IReadOnlyDictionary<string, Player> players)
