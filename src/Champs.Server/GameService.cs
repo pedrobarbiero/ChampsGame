@@ -1,29 +1,62 @@
 ﻿using System.Collections.ObjectModel;
+using System.Timers;
+using Champs.Shared;
 
-namespace Champs.Shared;
+namespace Champs.Server;
 
-public class Game
+public class GameService
 {
     private readonly Dictionary<string, Player> _players = [];
     private readonly Dictionary<string, Fruit> _fruits = [];
+    private readonly INotifier _notifier;
     public ReadOnlyDictionary<string, Player> Players => _players.AsReadOnly();
     public ReadOnlyDictionary<string, Fruit> Fruits => _fruits.AsReadOnly();
     public Board Board { get; init; } = new Board() { Height = 10, Width = 10 };
+    private readonly System.Timers.Timer _timer;
 
-    public Game()
+    public GameService(INotifier notifier)
     {
-        StartCyclingFruits();
+        _timer = new System.Timers.Timer();
+        _notifier = notifier;
+        StartCycling(3000);
     }
 
-
-    public static implicit operator StateDto(Game game)
+    private void StartCycling(double interval)
     {
-        return new StateDto
+        _timer.Interval = interval;
+        _timer.Elapsed += GenerateFruit;
+        _timer.Start();
+    }
+
+    private void StopCycling()
+    {
+        _timer.Stop();
+        _timer.Elapsed -= GenerateFruit;
+    }
+
+    ~GameService()
+    {
+        StopCycling();
+    }
+
+    public StateDto State => new()
+    {
+        Board = Board,
+        Players = _players,
+        Fruits = _fruits
+    };
+
+
+    private void GenerateFruit(object? sender, ElapsedEventArgs e)
+    {
+        var fruit = new Fruit
         {
-            Board = game.Board,
-            Players = game._players,
-            Fruits = game._fruits
+            Id = Guid.NewGuid().ToString(),
+            X = new Random().Next(0, Board.Width),
+            Y = new Random().Next(0, Board.Height)
         };
+        _fruits.Add(fruit.Id, fruit);
+        _notifier.Broadcast(State);
     }
 
     public void AddNewPlayer(string playerId)
@@ -36,29 +69,6 @@ public class Game
             Y = new Random().Next(0, Board.Height)
         });
     }
-
-    public void StartCyclingFruits()
-    {
-        Task.Run(async () =>
-        {
-            var timer = new PeriodicTimer(TimeSpan.FromSeconds(3));
-            while (await timer.WaitForNextTickAsync())
-            {
-                var id = Guid.NewGuid().ToString();
-                _fruits.Add(id, new Fruit
-                {
-                    Id = id,
-                    X = new Random().Next(0, Board.Width),
-                    Y = new Random().Next(0, Board.Height)
-                });
-                OnFruitAdded?.Invoke(id);
-            }
-        });
-    }
-
-    public Action<string> OnFruitAdded;
-
-
 
     public void RemovePlayer(string playerId)
     {
@@ -99,12 +109,4 @@ public class Game
         _fruits.Remove(fruitId);
         player.Score++;
     }
-}
-
-public enum Direction
-{
-    Up,
-    Down,
-    Left,
-    Right
 }

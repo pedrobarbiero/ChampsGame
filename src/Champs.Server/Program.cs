@@ -9,6 +9,9 @@ builder.Services.AddSignalR();
 
 builder.Services.AddCors();
 
+builder.Services.AddSingleton<GameService>();
+builder.Services.AddSingleton<INotifier, Notifier>();
+
 var app = builder.Build();
 
 app.MapHub<GameHub>("/game");
