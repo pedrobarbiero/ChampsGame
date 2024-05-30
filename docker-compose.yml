@@ -1,0 +1,21 @@
+version: '3.4'
+
+services:
+  server:
+    image: server
+    build:
+      context: .
+      dockerfile: ./src/Champs.Server/Dockerfile
+    ports:
+      - "5000:8080"
+
+  clientwasm:
+    image: clientwasm
+    build:
+      context: .
+      dockerfile: ./src/Champs.Client/Dockerfile
+    ports:
+      - "8200:8080"
+    depends_on:
+      - server
+  

@@ -1,10 +1,12 @@
 ﻿@using Champs.Shared
 @using Microsoft.AspNetCore.SignalR.Client
+@using Microsoft.AspNetCore.Components.WebAssembly.Hosting
 
 @inject IJSRuntime JSRuntime
+@inject IConfiguration Configuration
+
 
 @page "/"
-<PageTitle>Champs Game</PageTitle>
 <div id="canvasHolder" style="border: 10px solid #ccc;width: 400px; height: 400px">
     <BECanvas Width="400" Height="400" @ref="_canvasReference"></BECanvas>
 </div>
@@ -29,7 +31,7 @@
 </div>
 
 @code {
-    private string _hubUrl = "http://localhost:5185/game";
+    private string _hubUrl = null!;
     private HubConnection _hubConnection = null!;
     private Canvas2DContext _context = null!;
     protected BECanvasComponent _canvasReference = null!;
@@ -54,6 +56,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var url = Configuration["ServerURL"] ?? throw new InvalidOperationException("ServerURL is null");
+        _hubUrl = $"{url}/Game";
         await ConnectToHub();
     }
 
