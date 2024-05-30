@@ -1,5 +1,4 @@
-﻿using System.Collections.ObjectModel;
-using System.Timers;
+﻿using System.Timers;
 using Champs.Shared;
 
 namespace Champs.Server;
@@ -9,8 +8,6 @@ public class GameService
     private readonly Dictionary<string, Player> _players = [];
     private readonly Dictionary<string, Fruit> _fruits = [];
     private readonly INotifier _notifier;
-    public ReadOnlyDictionary<string, Player> Players => _players.AsReadOnly();
-    public ReadOnlyDictionary<string, Fruit> Fruits => _fruits.AsReadOnly();
     public Board Board { get; init; } = new Board() { Height = 10, Width = 10 };
     private readonly System.Timers.Timer _timer;
 
