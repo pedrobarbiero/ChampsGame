@@ -548,3 +548,4 @@ __pycache__/
 # End of https://www.toptal.com/developers/gitignore/api/aspnetcore
 
 log*.txt
+docs
