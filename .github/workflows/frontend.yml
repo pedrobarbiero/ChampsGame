@@ -8,7 +8,7 @@ on:
 
 permissions:
   contents: read
-  page: write
+  pages: write
   id-token: write
 
 concurrency:
