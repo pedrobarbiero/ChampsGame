@@ -43,7 +43,7 @@ jobs:
         run: dotnet publish -c:Release src/Champs.Client/Champs.Client.csproj -o docs --nologo
       
       - name: Setup Pages
-        uses: actions/configure-gh-pages@v4
+        uses: actions/configure-pages@v4
       
       - name: Upload Pages
         uses: actions/upload-pages-artifact@v3
