@@ -43,7 +43,7 @@ jobs:
       - name: Variable Substitution on appsettings.json
         uses: microsoft/variable-substitution@v1
         with:
-          files: 'docs/wwwroot/appsettings.json'
+          files: './docs/wwwroot/appsettings.json'
         env:
           PRODUCTION_SERVER_URL: ${{ secrets.PRODUCTION_SERVER_URL }}
 
