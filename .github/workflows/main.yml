@@ -45,7 +45,7 @@ jobs:
         with:
           files: 'docs/wwwroot/appsettings.json'
         env:
-          PRODUCTION_SERVER_URL: ${{ env.PRODUCTION_SERVER_URL }}
+          PRODUCTION_SERVER_URL: ${{ secrets.PRODUCTION_SERVER_URL }}
 
       - name: Change base-tag in index.html from / to ChampsGame
         run: sed -i 's/<base href="\/" \/>/<base href="\/ChampsGame\/" \/>/g' docs/wwwroot/index.html
