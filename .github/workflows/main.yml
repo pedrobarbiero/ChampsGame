@@ -16,23 +16,41 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Set up .NET Core
-        uses: actions/setup-dotnet@v1
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v3
         with:
           dotnet-version: '8.x'
           include-prerelease: true
 
-      - name: Build with dotnet
+      - name: Install .NET Wasm tools
+        run: dotnet workload install wasm-tools
+
+      - name: Build With .NET
         run: dotnet build --configuration Release
 
-      - name: dotnet publish
-        run: dotnet publish src/Champs.Server/Champs.Server.csproj -c Release -o ${{env.DOTNET_ROOT}}/myapp
+      - name: Publish Client
+        run: dotnet publish -c:Release src/Champs.Client/Champs.Client.csproj -o docs --nologo
 
-      - name: Upload artifact for deployment job
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/wwwroot
+      
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Publish Server
+        run: dotnet publish src/Champs.Server/Champs.Server.csproj -c Release -o ${{env.DOTNET_ROOT}}/server
+
+      - name: Upload Server artifact for deployment job
         uses: actions/upload-artifact@v3
         with:
           name: .net-app
-          path: ${{env.DOTNET_ROOT}}/myapp
+          path: ${{env.DOTNET_ROOT}}/server
 
   deploy:
     runs-on: ubuntu-latest
@@ -63,4 +81,3 @@ jobs:
           app-name: 'ChampsGame'
           slot-name: 'Production'
           package: .
-          
