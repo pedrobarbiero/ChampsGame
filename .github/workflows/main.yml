@@ -39,6 +39,13 @@ jobs:
 
       - name: Publish Client
         run: dotnet publish -c:Release src/Champs.Client/Champs.Client.csproj -o docs --nologo
+      
+      - name: Variable Substitution on appsettings.json
+        uses: microsoft/variable-substitution@v1
+        with:
+          files: 'docs/wwwroot/appsettings.json'
+        env:
+          PRODUCTION_SERVER_URL: ${{ env.PRODUCTION_SERVER_URL }}
 
       - name: Change base-tag in index.html from / to ChampsGame
         run: sed -i 's/<base href="\/" \/>/<base href="\/ChampsGame\/" \/>/g' docs/wwwroot/index.html
