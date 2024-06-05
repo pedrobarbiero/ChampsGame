@@ -40,6 +40,9 @@ jobs:
       - name: Publish Client
         run: dotnet publish -c:Release src/Champs.Client/Champs.Client.csproj -o docs --nologo
 
+      - name: Change base-tag in index.html from / to ChampsGame
+        run: sed -i 's/<base href="\/" \/>/<base href="\/ChampsGame\/" \/>/g' docs/wwwroot/index.html
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
