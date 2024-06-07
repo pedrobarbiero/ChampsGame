@@ -7,6 +7,15 @@
 
 
 @page "/"
+@if (_readyToPlay)
+{
+    <p>Use the arrow keys to move</p>
+}
+else
+{
+    <h1>Connecting...</h1>
+    <span>Please wait until server warm up</span>
+}
 <div id="canvasHolder" style="border: 10px solid #ccc;width: 400px; height: 400px">
     <BECanvas Width="400" Height="400" @ref="_canvasReference"></BECanvas>
 </div>
@@ -36,6 +45,7 @@
     private Canvas2DContext _context = null!;
     protected BECanvasComponent _canvasReference = null!;
     private string _currentPlayerId = null!;
+    private bool _readyToPlay = false;
     private StateDto? _state;
     public async Task ConnectToHub()
     {
@@ -52,6 +62,7 @@
 
         await _hubConnection.StartAsync();
         _currentPlayerId = _hubConnection.ConnectionId ?? throw new InvalidOperationException("ConnectionId is null");
+        _readyToPlay = true;
     }
 
     protected override async Task OnInitializedAsync()
