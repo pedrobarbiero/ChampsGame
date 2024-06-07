@@ -7,7 +7,11 @@ Welcome to Champs Game, the most fun game in development.
 
 This project is a small game developed to refresh the use of SignalR and .Net 8. It also incorporates the use of TimeProvider for testing purposes, using xUnit and FakeItEasy.
 
-You can play online using the keyboard arrows on https://pedrobarbiero.github.io/ChampsGame/. Invite your friends!
+You are a blue square and your rivals are the gray squares, the objective is to capture the fruits (green squares) and whoever captures the most fruits wins.
+
+You can play online using the keyboard arrows on https://pedrobarbiero.github.io/ChampsGame/.
+
+Invite your friends to a duel!
 
 The server is on a free AppService plan on Azure, so the first time you access it it should take a few seconds to load. If it takes too long, refresh the page.
 
