@@ -11,6 +11,8 @@ builder.Services.AddCors();
 
 builder.Services.AddSingleton<GameService>();
 builder.Services.AddSingleton<INotifier, Notifier>();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<IRandomGenerator, RandomGenerator>();
 
 var app = builder.Build();
 

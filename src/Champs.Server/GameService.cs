@@ -1,5 +1,4 @@
-﻿using System.Timers;
-using Champs.Shared;
+﻿using Champs.Shared;
 
 namespace Champs.Server;
 
@@ -8,27 +7,20 @@ public class GameService
     private readonly Dictionary<string, Player> _players = [];
     private readonly Dictionary<string, Fruit> _fruits = [];
     private readonly INotifier _notifier;
+    private readonly IRandomGenerator _randomGenerator;
     public Board Board { get; init; } = new Board() { Height = 10, Width = 10 };
-    private readonly System.Timers.Timer _timer;
+    private readonly ITimer _timer;
 
-    public GameService(INotifier notifier)
+    public GameService(INotifier notifier, IRandomGenerator randomGenerator, TimeProvider timerProvider)
     {
-        _timer = new System.Timers.Timer();
+        _timer = timerProvider.CreateTimer(GenerateFruitCallback, null, TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3));
         _notifier = notifier;
-        StartCycling(3000);
-    }
-
-    private void StartCycling(double interval)
-    {
-        _timer.Interval = interval;
-        _timer.Elapsed += GenerateFruit;
-        _timer.Start();
+        _randomGenerator = randomGenerator;
     }
 
     private void StopCycling()
     {
-        _timer.Stop();
-        _timer.Elapsed -= GenerateFruit;
+        _timer.Change(TimeSpan.MaxValue, TimeSpan.MaxValue);
     }
 
     ~GameService()
@@ -43,18 +35,18 @@ public class GameService
         Fruits = _fruits
     };
 
-
-    private void GenerateFruit(object? sender, ElapsedEventArgs e)
+    void GenerateFruitCallback(object? state)
     {
         var fruit = new Fruit
         {
             Id = Guid.NewGuid().ToString(),
-            X = new Random().Next(0, Board.Width),
-            Y = new Random().Next(0, Board.Height)
+            X = _randomGenerator.Generate(0, Board.Width),
+            Y = _randomGenerator.Generate(0, Board.Height)
         };
         _fruits.Add(fruit.Id, fruit);
         _notifier.Broadcast(State);
     }
+
 
     public void AddNewPlayer(string playerId)
     {
@@ -62,8 +54,8 @@ public class GameService
         {
             Id = playerId,
             Name = playerId,
-            X = new Random().Next(0, Board.Width),
-            Y = new Random().Next(0, Board.Height)
+            X = _randomGenerator.Generate(0, Board.Width),
+            Y = _randomGenerator.Generate(0, Board.Height)
         });
     }
 
