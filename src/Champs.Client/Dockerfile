@@ -4,7 +4,7 @@ WORKDIR /app
 COPY ChampsGame.sln ./
 COPY src/ ./src/
 
-RUN dotnet restore
+RUN dotnet restore src/Champs.Client
 
 RUN dotnet publish src/Champs.Client/Champs.Client.csproj -c Release -o out
 
