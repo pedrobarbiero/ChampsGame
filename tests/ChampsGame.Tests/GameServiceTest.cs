@@ -9,16 +9,17 @@ public class GameServiceTest
 {
     private readonly GameService _gameService;
     private readonly FakeTimeProvider _fakeTimer;
+    private readonly IRandomGenerator _randomGenerator;
     public GameServiceTest()
     {
         var notifier = A.Fake<INotifier>();
 
-        var randomGenerator = A.Fake<IRandomGenerator>();
-        A.CallTo(() => randomGenerator.Generate(A<int>._, A<int>._)).Returns(5);
+        _randomGenerator = A.Fake<IRandomGenerator>();
+        A.CallTo(() => _randomGenerator.Generate(A<int>._, A<int>._)).Returns(5);
 
         _fakeTimer = new FakeTimeProvider(startDateTime: DateTimeOffset.UtcNow);
 
-        _gameService = new GameService(notifier, randomGenerator, _fakeTimer);
+        _gameService = new GameService(notifier, _randomGenerator, _fakeTimer);
     }
     [Fact]
     public void AddNewPlayer_AddsPlayer()
@@ -87,6 +88,22 @@ public class GameServiceTest
 
         Assert.Empty(_gameService.State.Fruits);
         Assert.Equal(1, _gameService.State.Players["1"].Score);
+    }
+
+    [Fact]
+    public void FruitsShouldBeCreated_OnFakeFruitPosition()
+    {
+        A.CallTo(() => _randomGenerator.Generate(A<int>._, A<int>._)).Returns(1); //All fruits will be created at position 1
+        _fakeTimer.Advance(TimeSpan.FromSeconds(21));
+        A.CallTo(() => _randomGenerator.Generate(A<int>._, A<int>._)).Returns(2); //All fake fruits will be created at position 2, and random index will be 2
+        _fakeTimer.Advance(TimeSpan.FromSeconds(1));
+        var allFruitsIds = _gameService.State.Fruits.Select(f => f.Key).ToList();
+
+        Assert.Equal(3, _gameService.State.FakeFruits.Count);
+        _fakeTimer.Advance(TimeSpan.FromSeconds(2));
+
+        var newFruitId = _gameService.State.Fruits.Keys.Except(allFruitsIds).Single();
+        Assert.Equal(2, _gameService.State.Fruits[newFruitId].X);
     }
 
 }

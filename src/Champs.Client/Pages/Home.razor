@@ -122,8 +122,9 @@ else
         await _context.SetFillStyleAsync("white");
         await FillRectAsync(0, 0, 10, 10);
 
-        await Draw(state.Fruits);
         await Draw(state.Players);
+        await DrawFake(state.FakeFruits);
+        await Draw(state.Fruits);
     }
 
     private async Task Draw(IReadOnlyDictionary<string, Player> players)
@@ -134,19 +135,27 @@ else
             if (entry.Key != _currentPlayerId)
                 await FillRectAsync(entry.Value.X, entry.Value.Y);
         }
-        await _context.SetFillStyleAsync("blue");
+        await _context.SetFillStyleAsync("#0000FF");
         var currentPlayer = players[_currentPlayerId];
         await FillRectAsync(currentPlayer.X, currentPlayer.Y);
     }
 
     private async Task Draw(IReadOnlyDictionary<string, Fruit> fruits)
     {
-        await _context.SetFillStyleAsync("green");
+        await _context.SetFillStyleAsync("#005500");
         foreach (KeyValuePair<string, Fruit> entry in fruits)
         {
             await FillRectAsync(entry.Value.X, entry.Value.Y);
         }
     }
 
+    private async Task DrawFake(IEnumerable<Fruit> fruits)
+    {
+        await _context.SetFillStyleAsync("#009900");
+        foreach (var fruit in fruits)
+        {
+            await FillRectAsync(fruit.X, fruit.Y);
+        }
+    }
 
 }

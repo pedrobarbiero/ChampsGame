@@ -6,21 +6,26 @@ public class GameService
 {
     private readonly Dictionary<string, Player> _players = [];
     private readonly Dictionary<string, Fruit> _fruits = [];
+    private readonly List<Fruit> _fakeFruits = [];
     private readonly INotifier _notifier;
     private readonly IRandomGenerator _randomGenerator;
     public Board Board { get; init; } = new Board() { Height = 10, Width = 10 };
-    private readonly ITimer _timer;
+    private readonly ITimer _fruitTimer;
+    private readonly ITimer _fakeFruitTimer;
+    private const int MAX_FAKE_FRUITS = 3;
 
     public GameService(INotifier notifier, IRandomGenerator randomGenerator, TimeProvider timerProvider)
     {
-        _timer = timerProvider.CreateTimer(GenerateFruitCallback, null, TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3));
+        _fruitTimer = timerProvider.CreateTimer(GenerateFruitCallback, null, TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3));
+        _fakeFruitTimer = timerProvider.CreateTimer(GenerateFakeFruitCallback, null, TimeSpan.FromSeconds(22), TimeSpan.FromSeconds(3));
         _notifier = notifier;
         _randomGenerator = randomGenerator;
     }
 
     private void StopCycling()
     {
-        _timer.Change(TimeSpan.MaxValue, TimeSpan.MaxValue);
+        _fruitTimer.Change(TimeSpan.MaxValue, TimeSpan.MaxValue);
+        _fakeFruitTimer.Change(TimeSpan.MaxValue, TimeSpan.MaxValue);
     }
 
     ~GameService()
@@ -32,18 +37,41 @@ public class GameService
     {
         Board = Board,
         Players = _players,
-        Fruits = _fruits
+        Fruits = _fruits,
+        FakeFruits = _fakeFruits
     };
+
+    void GenerateFakeFruitCallback(object? state)
+    {
+        for (var i = 0; i < MAX_FAKE_FRUITS; i++)
+        {
+            _fakeFruits.Add(new Fruit
+            {
+                Id = Guid.NewGuid().ToString(),
+                X = _randomGenerator.Generate(0, Board.Width),
+                Y = _randomGenerator.Generate(0, Board.Height)
+            });
+        }
+    }
 
     void GenerateFruitCallback(object? state)
     {
-        var fruit = new Fruit
+        if (_fakeFruits.Count > 0)
         {
-            Id = Guid.NewGuid().ToString(),
-            X = _randomGenerator.Generate(0, Board.Width),
-            Y = _randomGenerator.Generate(0, Board.Height)
-        };
-        _fruits.Add(fruit.Id, fruit);
+            var index = _randomGenerator.Generate(0, _fakeFruits.Count);
+            _fruits.Add(_fakeFruits[index].Id, _fakeFruits[index]);
+            _fakeFruits.Clear();
+        }
+        else
+        {
+            var fruit = new Fruit
+            {
+                Id = Guid.NewGuid().ToString(),
+                X = _randomGenerator.Generate(0, Board.Width),
+                Y = _randomGenerator.Generate(0, Board.Height)
+            };
+            _fruits.Add(fruit.Id, fruit);
+        }
         _notifier.Broadcast(State);
     }
 
