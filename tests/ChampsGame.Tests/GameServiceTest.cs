@@ -4,12 +4,12 @@ using Microsoft.Extensions.Time.Testing;
 
 namespace ChampsGame.Tests;
 
-
 public class GameServiceTest
 {
     private readonly GameService _gameService;
     private readonly FakeTimeProvider _fakeTimer;
     private readonly IRandomGenerator _randomGenerator;
+
     public GameServiceTest()
     {
         var notifier = A.Fake<INotifier>();
@@ -21,6 +21,7 @@ public class GameServiceTest
 
         _gameService = new GameService(notifier, _randomGenerator, _fakeTimer);
     }
+
     [Fact]
     public void AddNewPlayer_AddsPlayer()
     {
@@ -105,5 +106,4 @@ public class GameServiceTest
         var newFruitId = _gameService.State.Fruits.Keys.Except(allFruitsIds).Single();
         Assert.Equal(2, _gameService.State.Fruits[newFruitId].X);
     }
-
 }

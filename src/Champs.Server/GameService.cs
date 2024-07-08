@@ -14,10 +14,24 @@ public class GameService
     private readonly ITimer _fakeFruitTimer;
     private const int MAX_FAKE_FRUITS = 3;
 
-    public GameService(INotifier notifier, IRandomGenerator randomGenerator, TimeProvider timerProvider)
+    public GameService(
+        INotifier notifier,
+        IRandomGenerator randomGenerator,
+        TimeProvider timerProvider
+    )
     {
-        _fruitTimer = timerProvider.CreateTimer(GenerateFruitCallback, null, TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3));
-        _fakeFruitTimer = timerProvider.CreateTimer(GenerateFakeFruitCallback, null, TimeSpan.FromSeconds(22), TimeSpan.FromSeconds(3));
+        _fruitTimer = timerProvider.CreateTimer(
+            GenerateFruitCallback,
+            null,
+            TimeSpan.FromSeconds(3),
+            TimeSpan.FromSeconds(3)
+        );
+        _fakeFruitTimer = timerProvider.CreateTimer(
+            GenerateFakeFruitCallback,
+            null,
+            TimeSpan.FromSeconds(22),
+            TimeSpan.FromSeconds(3)
+        );
         _notifier = notifier;
         _randomGenerator = randomGenerator;
     }
@@ -33,24 +47,27 @@ public class GameService
         StopCycling();
     }
 
-    public StateDto State => new()
-    {
-        Board = Board,
-        Players = _players,
-        Fruits = _fruits,
-        FakeFruits = _fakeFruits
-    };
+    public StateDto State =>
+        new()
+        {
+            Board = Board,
+            Players = _players,
+            Fruits = _fruits,
+            FakeFruits = _fakeFruits
+        };
 
     void GenerateFakeFruitCallback(object? state)
     {
         for (var i = 0; i < MAX_FAKE_FRUITS; i++)
         {
-            _fakeFruits.Add(new Fruit
-            {
-                Id = Guid.NewGuid().ToString(),
-                X = _randomGenerator.Generate(0, Board.Width),
-                Y = _randomGenerator.Generate(0, Board.Height)
-            });
+            _fakeFruits.Add(
+                new Fruit
+                {
+                    Id = Guid.NewGuid().ToString(),
+                    X = _randomGenerator.Generate(0, Board.Width),
+                    Y = _randomGenerator.Generate(0, Board.Height)
+                }
+            );
         }
     }
 
@@ -75,16 +92,18 @@ public class GameService
         _notifier.Broadcast(State);
     }
 
-
     public void AddNewPlayer(string playerId)
     {
-        _players.Add(playerId, new Player
-        {
-            Id = playerId,
-            Name = playerId,
-            X = _randomGenerator.Generate(0, Board.Width),
-            Y = _randomGenerator.Generate(0, Board.Height)
-        });
+        _players.Add(
+            playerId,
+            new Player
+            {
+                Id = playerId,
+                Name = playerId,
+                X = _randomGenerator.Generate(0, Board.Width),
+                Y = _randomGenerator.Generate(0, Board.Height)
+            }
+        );
     }
 
     public void RemovePlayer(string playerId)

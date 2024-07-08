@@ -1,7 +1,7 @@
 ﻿namespace Champs.Client;
 
-using Microsoft.JSInterop;
 using System.Threading.Tasks;
+using Microsoft.JSInterop;
 
 public static class GlobalKeyListener
 {
